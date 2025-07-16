@@ -1,0 +1,185 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>贪吃蛇游戏</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 2px solid #333;
+            background-color: #111;
+            margin-bottom: 10px;
+        }
+        #score {
+            margin: 10px 0;
+            font-size: 24px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>贪吃蛇游戏</h1>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div id="score">得分: 0</div>
+    <button id="startBtn">开始游戏</button>
+    <div id="gameStatus">按方向键控制移动</div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const startBtn = document.getElementById('startBtn');
+        const gameStatus = document.getElementById('gameStatus');
+        
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+        let score = 0;
+        let gameRunning = false;
+        let gameInterval;
+        
+        let snake = [
+            {x: 10, y: 10}
+        ];
+        let food = {
+            x: Math.floor(Math.random() * tileCount),
+            y: Math.floor(Math.random() * tileCount)
+        };
+        
+        let xVelocity = 0;
+        let yVelocity = 0;
+        
+        function gameLoop() {
+            // 移动蛇
+            const head = {x: snake[0].x + xVelocity, y: snake[0].y + yVelocity};
+            snake.unshift(head);
+            
+            // 检查是否吃到食物
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                scoreElement.textContent = '得分: ' + score;
+                food = {
+                    x: Math.floor(Math.random() * tileCount),
+                    y: Math.floor(Math.random() * tileCount)
+                };
+            } else {
+                snake.pop();
+            }
+            
+            // 检查碰撞
+            if (
+                head.x < 0 || head.x >= tileCount || 
+                head.y < 0 || head.y >= tileCount ||
+                snake.slice(1).some(segment => segment.x === head.x && segment.y === head.y)
+            ) {
+                gameOver();
+                return;
+            }
+            
+            // 绘制游戏
+            drawGame();
+        }
+        
+        function drawGame() {
+            ctx.fillStyle = '#111';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制蛇
+            ctx.fillStyle = '#4CAF50';
+            snake.forEach(segment => {
+                ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize-2, gridSize-2);
+            });
+            
+            // 绘制食物
+            ctx.fillStyle = '#F44336';
+            ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize-2, gridSize-2);
+        }
+        
+        function resetGame() {
+            snake = [{x: 10, y: 10}];
+            xVelocity = 0;
+            yVelocity = 0;
+            score = 0;
+            scoreElement.textContent = '得分: 0';
+            food = {
+                x: Math.floor(Math.random() * tileCount),
+                y: Math.floor(Math.random() * tileCount)
+            };
+            drawGame();
+        }
+        
+        function startGame() {
+            if (!gameRunning) {
+                resetGame();
+                gameRunning = true;
+                startBtn.textContent = '重新开始';
+                gameStatus.textContent = '游戏进行中';
+                gameInterval = setInterval(gameLoop, 100);
+            } else {
+                clearInterval(gameInterval);
+                gameRunning = false;
+                startGame();
+            }
+        }
+        
+        function gameOver() {
+            clearInterval(gameInterval);
+            gameRunning = false;
+            gameStatus.textContent = '游戏结束！最终得分: ' + score;
+            startBtn.textContent = '重新开始';
+        }
+        
+        startBtn.addEventListener('click', startGame);
+        
+        document.addEventListener('keydown', event => {
+            if (!gameRunning) return;
+            
+            switch(event.key) {
+                case 'ArrowUp':
+                    if (yVelocity !== 1) {
+                        xVelocity = 0;
+                        yVelocity = -1;
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (yVelocity !== -1) {
+                        xVelocity = 0;
+                        yVelocity = 1;
+                    }
+                    break;
+                case 'ArrowLeft':
+                    if (xVelocity !== 1) {
+                        xVelocity = -1;
+                        yVelocity = 0;
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (xVelocity !== -1) {
+                        xVelocity = 1;
+                        yVelocity = 0;
+                    }
+                    break;
+            }
+        });
+        
+        // 初始绘制
+        drawGame();
+    </script>
+</body>
+</html>
